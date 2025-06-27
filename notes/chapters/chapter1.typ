@@ -215,6 +215,53 @@ $
 
 #pagebreak()
 
+== Disk  Scheduling
+Caching helps improve disk performance, but it cannot make up for poor random accesses. If there are a queue of requests to the disk, they can be reordered to improve performance. Estimation of the request length is feasible knowing the position on the disk of the data. Several scheduling algorithms
+- First come, first serve (*FCFS*)
+- Shortest seek time first (*SSTF*)
+- *SCAN*, otherwise know as the elevator algorithm
+- *C-SCAN*, *C-LOOK*, etc.
+
+=== First Come, First Serve (FCFS)
+The simplest disk scheduling algorithm is First Come, First Serve (FCFS). Requests are processed in the order they arrive, without any reordering. While easy to implement, FCFS can lead to
+long wait times, especially if a request is far from the current head position.
+
+#figure(image("../figures/FCFS.jpg"), caption: "FCFS disk scheduling")
+
+=== Shortest Seek Time First (SSTF)
+The Shortest Seek Time First (SSTF) algorithm selects the request closest to the current head position, reducing the average seek time.
+
+#figure(image("../figures/SSTF.jpg"), caption: "SSTF disk scheduling")
+
+- *The good:* SSTF is optimal, and it can be easily implemented!
+- *The bad:* SSTF is prone to starvation
+
+=== SCAN (Elevator Algorithm)
+The SCAN algorithm moves the disk arm in one direction, servicing requests until it reaches the end of the disk, then reverses direction and services requests on the way back. This approach reduces the average seek time and *avoids starvation*.
+
+#figure(image("../figures/SCAN.jpg"), caption: "SCAN disk scheduling")
+
+- *The good:* reasonable performance, no starvation
+- *The bad:* average access times is higher for requests at high and low addresses
+
+=== C-SCAN (Circular SCAN)
+The C-SCAN algorithm is a variation of SCAN that only services requests in one direction. When it reaches the end of the disk, it jumps back to the beginning without servicing any requests on the way back. This approach provides a more uniform wait time for all requests.
+
+#figure(image("../figures/C-SCAN.jpg"), caption: "C-SCAN disk scheduling")
+
+- *The good:* fairer than SCAN
+- *The bad:* worse performance than SCAN
+
+=== C-LOOK
+The C-LOOK  algorithm is similar to C-SCAN but instead of jumping back to the beginning of the disk, it jumps to the closest request in the opposite direction. This reduces unnecessary movement of the disk arm.
+
+#figure(image("../figures/C-LOOK.jpg"), caption: "C-LOOK disk scheduling")
+
+- *The good:* fairer than C-SCAN, no unnecessary movement
+- *The bad:* worse performance than C-SCAN
+
+#pagebreak()
+
 = SSD
 
 #pagebreak()
