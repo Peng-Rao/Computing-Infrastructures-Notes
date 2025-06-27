@@ -263,5 +263,6 @@ The C-LOOK  algorithm is similar to C-SCAN but instead of jumping back to the be
 #pagebreak()
 
 = SSD
+Solid State Drives (SSDs) are a type of storage device that use flash memory to store data. Unlike traditional hard disk drives (HDDs), which rely on spinning disks and mechanical read/write heads, SSDs have no moving parts. This fundamental difference leads to several key advantages and characteristics that make SSDs particularly well-suited for modern computing environments.
 
 #pagebreak()
