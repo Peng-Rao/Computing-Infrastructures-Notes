@@ -56,7 +56,7 @@ Small, low-power micro controllers or sensors with limited CPU, memory, and stor
 - *Constraints:* Must minimize energy usage and typically rely on lightweight communication protocols.
 
 === Edge/Fog Computing
-- *Edge Nodes:* More capable than simple sensors, placed physically close to data sources to perform local data processing or filtering.
+- *Edge Nodes:* *More capable* than simple sensors, placed physically close to data sources to perform local data processing or filtering.
 - *Fog Nodes:* Considered the "last mile" before the cloud, often residing in local networks or telecom infrastructure (like 5G base stations).
 - *Advantages:*
   - *Reduced Latency:* Faster processing and real-time decisions (e.g., industrial control, autonomous vehicles).
@@ -75,6 +75,27 @@ Small, low-power micro controllers or sensors with limited CPU, memory, and stor
   - *High Power Consumption:* Energy and cooling demands are significant.
   - *Latency:* Distance from users or devices can add network delay.
   - *Cost:* Owning and operating large data centers entails substantial investment.
+
+== Data Center
+Traditional data centers typically host *a large number of relatively small or medium-sized applications*, each applications is running one a dedicated hardware infrastructure that is de-coupled and protected from other systems in the same facility, applications tend not to communicate each other.
+
+Those data centers host hardware and software for multiple organizational units or even different companies.
+
+== Warehouse-scale Computers
+WSCs belong to a single organization, use a relatively homogeneous hardware and system software platform, and share a common systems management layer.
+
+WSCs run *a smaller number of very large applications* (or internet services). All of these applications rely on *Virtual Machines* (or Containers), and they access large, common services for block or database storage, load balancing, and so on, fitting very well with the WSC model.
+
+== Geographic Areas and Regions
+The world is divided into *Geographic Areas (GAs)*, defined by Geo-political boundaries (or country borders) and determined by data residency. In each GA there are at least 2 computing regions.
+
+Customers see *regions* as the finer grain discretization of the infrastructure, multiple DCs in the same region are not exposed. *Too far for synchronous replication, but ok for disaster recovery.* Latency-defined perimeter (*2ms latency for the round trip*).
+
+*Availability Zones (AZs)* are finer grain location within a single computing region
+- allow customers to run mission critical applications with high availability and fault tolerance to datacenter failures
+- Application-level synchronous replication among Azs
+- 3 is minimum and enough for quorum
+
 
 #pagebreak()
 
@@ -151,6 +172,14 @@ Thus, data centers often pair HDD arrays with caching systems, using faster soli
 Hard disk drives typically serve as a foundation for *capacity-driven storage*. Large content repositories, unstructured data lakes, and certain enterprise databases can reside on HDD arrays to contain storage expenses. Many operators adopt multi-tiered designs: *data frequently accessed by real-time applications sits on SSDs, while older or less active data migrates to HDD volumes.* This distinction helps data centers satisfy performance expectations for mission-critical queries without incurring the higher cost of all-flash systems. Ensuring that data remains both accessible and secure, modern facilities rarely rely on single HDDs alone. RAID mechanisms or distributed file systems ensure redundancy, so the failure of one drive or even multiple drives does not compromise availability. This approach aligns with broader goals of high availability, as data centers strive to deliver robust uptime across a sprawling user base.
 
 #figure(image("../figures/read-write.jpg"), caption: "Read/Write process in HDDs")
+
+Four types of delay:
+- *Rotational Delay:* Time to rotate the *desired sector* to the read head
+- *Seek Time:* Time to move the read head to the *desired track*
+- *Transfer Time:* Time to transfer the data from the disk to the host
+- *Controller Overhead:* Overhead for the request management
+
+#pagebreak()
 
 == Calculate the I/O service time
 To calculate the I/O service time for an HDD, we need to consider the seek time, rotational latency, transfer time, and overhead control time. The formula is:
@@ -265,4 +294,175 @@ The C-LOOK  algorithm is similar to C-SCAN but instead of jumping back to the be
 = SSD
 Solid State Drives (SSDs) are a type of storage device that use flash memory to store data. Unlike traditional hard disk drives (HDDs), which rely on spinning disks and mechanical read/write heads, SSDs have no moving parts. This fundamental difference leads to several key advantages and characteristics that make SSDs particularly well-suited for modern computing environments.
 
+== Flash Translation Layer (FTL)
+The Flash Translation Layer (FTL) is a crucial component of SSDs that manages the mapping between logical block addresses (LBAs) used by the operating system and the physical locations in the NAND flash memory. The FTL handles several important tasks:
+- Data Allocation and Address translation
+- Garbage Collection
+- Wear Leveling
+
+== Core Components of SSDs
+=== NAND Flash Memory
+NAND flash memory is the main storage medium in SSDs. Stores data in memory cells, typically using these types:
+- *SLC (Single-Level Cell):* Stores one bit per cell
+- *MLC (Multi-Level Cell):* Stores two bits per cell
+- *TLC (Triple-Level Cell):* Stores three bits per cell
+- *QLC (Quad-Level Cell):* Stores four bits per cell
+
+== Logical organization
+=== Blocks
+The *block* in SSDs is the smallest unit that can be erased. It consists of multiple pages and can be cleaned using the *ERASE* command.
+
+=== Pages
+The *page* is the smallest unit that can be read/written. It is a sub-unit of an erase block and consists of the number of bytes which can be read/written in a single operations through the *READ* or *PROGRAM* commands. Pages can be in three states:
+- *Empty:* They do not contain data.
+- *Dirty (or INVALID):* They contain data, but this data is no longer in use (or never used).
+- *In use (or VALID):* The page contains data that can be actually read.
+
 #pagebreak()
+
+= RAID
+*RAID* stands for *Redundant Array of Independent Disks*. It's a data storage technology that combines multiple physical hard drives into a single logical unit for the purposes of *redundancy*, *performance improvement*, or both. Two orthogonal techniques:
+- *data striping:* to improve performance
+- *redundancy:* to improve reliability
+
+== Data Striping
+Data are written sequentially (a vector, a file, a table, ......) in units (stripe unit: bit, byte, blocks) on multiple disks according to a cyclic algorithm  (round robin).
+- *stripe unit:* dimension of the unit of data that are written on a single disk
+- *stripe width:* number of disks considered by the striping algorithm
+
+== RAID Level 0
+Data are written on a *single logical disk* and split in several blocks distributed across the disks according to a striping algorithm.
+- *used where performance and capacity, rather than reliability*, are the primary concerns, minimum two drives required
+- *lowest cost* because it does not employ redundancy (no error-correcting codes are computed and stored)
+- *best write performance* (it does not need to update redundant data and it is parallelized)
+- *single* disk failure will result in data loss
+
+How do you access specific data blocks?
+- Disk = logical_block_number % number_of_disks
+- Offset = logical_block_number / number_of_disks
+
+=== Analysis of RAID 0
+- Capacity: N, All space on all drives can be filled with data
+- Reliability: 0, No redundancy, if one disk fails, all data is lost
+- Sequential read and write: $N times S$, Full parallelization across drives
+- Random read and write: $N times R$, Full parallelization across all drives
+
+#pagebreak()
+
+== RAID Level 1
+RAID 0 offers high performance, but *zero error recovery*, the key idea is to make two copies of all data (minimum 2 disk drives).
+- *high reliability:* when a disk fails  the second copy is used
+- *Fast writes* (no error correcting code should be computed) - but still slower than standard disks (due to duplication)
+- *high costs* (50% of the capacity is used)
+
+=== Analysis of RAID 1
+- *Capacity:* N/2, Half of the total space is used for data storage
+- *Reliability:* 1, If one disk fails, the other copy is still available
+- *Sequential read:* $N / 2 times S$, Half of the read blocks are wasted, thus halving throughput
+- *Sequential write:* $N / 2 times S$, Two copies of all data, thus half throughput
+- *Random read:* $N times R$, Best case scenario for RAID 1, Reads can parallelize across all disks
+- *Random write:* $N / 2 times R$, Two copies of all data, thus half throughput
+
+== RAID Level 4
+RAID 4 is similar to RAID 0, but it adds a *dedicated parity disk* to store error-correcting codes for the data blocks. This allows for recovery in case of a single disk failure.
+- *dedicated parity disk* is used to store the error-correcting codes for the data blocks
+- *high reliability:* when a disk fails the parity disk is used to recover the data
+
+=== Analysis of RAID 4
+- *Capacity:* N - 1, One disk is used for parity
+- *Reliability:* 1, If one disk fails, the parity disk can be used to recover the data
+- *Sequential read:* $(N - 1) times S$, Parity disk is not read
+- *Sequential write:* $(N - 1) times S$, Parity must be updated
+- *Random read:* $(N - 1) times R$, Best case scenario, reads can parallelize across all disks
+- *Random write:* $R / 2$, Writes serialize due to the parity drive, Each write requires 1 read and 1 write of the parity drive, thus $R / 2$
+
+== Reliability Calculation
+
+
+
+#pagebreak()
+
+= Data Center Building
+== Cooling Systems
+IT equipment generates *a lot of heat:* the *cooling system* is usually a very expensive component of the datacenter, and it is composed by *coolers*, *heat-exchangers* and *cold water tanks*.
+
+
+== Tier of Data Centers
+#table(
+  columns: (auto, 1fr, auto),
+  align: (center, left, center),
+  stroke: 1pt + gray,
+  fill: (x, y) => if y == 0 { rgb("#d4e6d4") } else { rgb("#e8f5e8") },
+
+  [*Tier Level*], [*Requirements*], [*Downtime*],
+
+  [*1*],
+  [
+    - Single non-redundant distribution path serving the IT equipment\
+    - Non-redundant capacity components\
+    - Basic site infrastructure with expected availability of 99.671%
+  ],
+  [#text(red)[*29h*]],
+
+  [*2*],
+  [
+    - Meets or exceeds all Tier 1 requirements\
+    - Redundant site infrastructure capacity components with expected availability of 99.741%
+  ],
+  [#text(red)[*22,5h*]],
+
+  [*3*],
+  [
+    - Meets or exceeds all Tier 2 requirements\
+    - Multiple independent distribution paths serving the IT equipment\
+    - All IT equipment must be dual-powered and fully compatible with the topology of a site's architecture\
+    - Concurrently maintainable site infrastructure with expected availability of 99.982%
+  ],
+  [#text(red)[*1,5h*]],
+
+  [*4*],
+  [
+    - Meets or exceeds all Tier 3 requirements\
+    - All cooling equipment is independently dual-powered, including chillers and heating, ventilating and air-conditioning (HVAC) systems\
+    - Fault-tolerant site infrastructure with electrical power storage and distribution facilities with expected availability of 99.995%
+  ],
+  [#text(red)[*0,5h*]],
+)
+
+#pagebreak()
+
+= Virtualization
+A *Virtual Machine (VM)* is a logical abstraction able to provide a virtualized execution environment. More specifically, a VM:
+- provides identical software behavior
+- consists in a combination of physical machine and virtualizing software
+- may appear as different resources than physical machine
+- may result in different levels of performances
+
+Its tasks are:
+- To map virtual resources or states to corresponding physical ones
+- To use physical machine instructions/calls to execute the virtual ones.
+
+Two types of Virtual Machines:
+- *Process VMs*
+- *System VMs*
+
+== Process Virtual Machines
+Process VMs is able to support an individual process, the virtualizing software is placed at the *ABI interface*, on top of the OS/hardware combination.
+
+The virtualizing software emulates both user-level instructions and operating system calls. The virtualization software is usually called *Runtime Software*.
+
+== System Virtual Machines
+System VMs provide a complete system environment that can  support an operating system (potentially with many user processes). It provides operating system running in it access to underlying hardware resources (networking, I/O, a GUI).
+
+Virtualizing software placed between hardware and software (emulates the ISA interface seen by software). The virtualization software is called *VMM (Virtual Machine Monitor)*. The VMM can provide its functionality either working directly on the hardware, or running on another OS.
+
+#figure(image("../figures/host-guest.jpg"))
+
+- *Host:* the underlying platform supporting the environment/system
+- *Guest:* the software that runs in the VM environment as the guest.
+
+== Virtual Machine Managers
+An application that:
+- manages the virtual machines
+- mediates access to the hardware resources on the physical host system
+- intercepts and handles any privileged or protected instructions issued by the virtual machines
