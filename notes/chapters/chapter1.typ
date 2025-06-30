@@ -466,3 +466,18 @@ An application that:
 - manages the virtual machines
 - mediates access to the hardware resources on the physical host system
 - intercepts and handles any privileged or protected instructions issued by the virtual machines
+
+== Containers
+Containers are *pre-configured packages*, with everything you need to execute the code (code, libraries, variables and configurations) in the target machine.
+
+The main advantage of containers is that their behavior is *predictable, repeatable and immutable*:
+- When I create a "master" container and duplicate it on another server, *I know exactly how it will be executed*
+- There are no unexpected errors when moving it to a new machine or between environments
+
+Containers are:
+- *Flexible:* even the most complex applications can be containerized;
+- *Light:* the containers exploit and share the host kernel;
+- *Interchangeable:* updates and updates can be distributed on the fly;
+- *Portable:* you can create locally, deploy in the Cloud and run anywhere;
+- *Scalable:* it is possible to automatically increase and distribute replicas of the container;
+- *Stackable:* containers can be stacked vertically and on the fly.
