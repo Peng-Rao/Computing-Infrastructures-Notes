@@ -386,14 +386,14 @@ RAID 4 is similar to RAID 0, but it adds a *dedicated parity disk* to store erro
 == Cooling Systems
 IT equipment generates *a lot of heat:* the *cooling system* is usually a very expensive component of the datacenter, and it is composed by *coolers*, *heat-exchangers* and *cold water tanks*.
 
-== Open-loop
+=== Open-loop
 The simplest topology is fresh air cooling (or air economization) essentially, opening the windows. This is a single *open-loop* system.
 
 #figure(image("../figures/Open-loop.jpg"))
 
 Free cooling, i.e., open-loop, refers to the use of cold outside air to either help the production of chilled water or directly cool servers. It is not completely free in the sense of zero cost, but it involves very low-energy costs compared to chillers.
 
-== Closed-loop
+=== Closed-loop
 *Closed-loop* systems come in many forms, the most common being the air circuit on the data center floor.
 - The goal is to *isolate and remove heat from the servers* and transport it to a heat exchanger.
 - Cold air flows to the servers, heats up, and eventually reaches a heat exchanger to cool it down again for the next cycle through the servers.
@@ -403,7 +403,7 @@ Free cooling, i.e., open-loop, refers to the use of cold outside air to either h
 
 Cold air flows from the front (cool aisle), cools down the equipment, and leaves the room from the back (warm aisle).
 
-== Two Or Three Loops
+=== Two Or Three Loops
 The airflow through the underfloor plenum, the racks, and back to the CRAC (a 1960s term for computer room air conditioning) defines the primary air circuit, i.e., the *first loop*.
 
 The *second loop* (the liquid supply inside the CRACs units) leads directly from the CRAC to external heat exchangers (typically placed on the building roof) that discharge the heat to the environment.
@@ -412,10 +412,29 @@ A three-loop system commonly used in large-scale data center
 
 #figure(image("../figures/three-loop.jpg"))
 
-== Chillers and Cooling Towers
+=== Chillers and Cooling Towers
 A water-cooled chiller can be thought of as a water-cooled air conditioner.
 
 Cooling towers cool a water stream *by evaporating* a portion of it into the atmosphere. They do not work as well in very cold climates because they need additional mechanisms to prevent ice formation.
+
+=== Comparison
+Each topology presents tradeoffs in complexity, efficiency, and cost:
+- *Fresh air cooling* can be very efficient but does not work in all climates, requires filtering of airborne particulates, and can introduce complex control problems.
+- *Two-loop systems* are easy to implement, relatively inexpensive to construct, and offer isolation from external contamination, but typically have lower operational efficiency.
+- *A three-loop system* is the most expensive to construct and has moderately complex controls, but offers contaminant protection and good efficiency.
+
+=== In Rack Cooling
+In-rack cooler adds an air-to-water heat exchanger at the back of a rack so the hot air exiting the servers immediately flows over coils cooled by water, essentially reducing the path between server exhaust and CRAC input.
+
+=== In Row Cooling
+In-row cooling works like in-rack cooling except the cooling coils aren't in the rack, but *adjacent to the rack*.
+
+=== Liquid cooling
+We can directly cool server components using cold plates, i.e., local liquid-cooled heat sinks:
+- Impractical to cool all compute components with cold plates.
+- Components with the highest power dissipation are targeted for liquid cooling while other components are air-cooled.
+
+The liquid circulating through the heat sinks transports the heat to a liquid-to-air or liquid-to-liquid heat exchanger that can be placed close to the tray or rack, or be part of the data center building (such as a cooling tower).
 
 == Tier of Data Centers
 #table(
