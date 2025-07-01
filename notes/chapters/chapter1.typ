@@ -386,6 +386,36 @@ RAID 4 is similar to RAID 0, but it adds a *dedicated parity disk* to store erro
 == Cooling Systems
 IT equipment generates *a lot of heat:* the *cooling system* is usually a very expensive component of the datacenter, and it is composed by *coolers*, *heat-exchangers* and *cold water tanks*.
 
+== Open-loop
+The simplest topology is fresh air cooling (or air economization) essentially, opening the windows. This is a single *open-loop* system.
+
+#figure(image("../figures/Open-loop.jpg"))
+
+Free cooling, i.e., open-loop, refers to the use of cold outside air to either help the production of chilled water or directly cool servers. It is not completely free in the sense of zero cost, but it involves very low-energy costs compared to chillers.
+
+== Closed-loop
+*Closed-loop* systems come in many forms, the most common being the air circuit on the data center floor.
+- The goal is to *isolate and remove heat from the servers* and transport it to a heat exchanger.
+- Cold air flows to the servers, heats up, and eventually reaches a heat exchanger to cool it down again for the next cycle through the servers.
+
+=== Data-center corridors
+*Server Racks are NEVER BACK-to-BACK.*  Corridors where servers are located are split into cold aisle, where the front panels of the equipment is reachable, and warm aisle, where the back connections are located.
+
+Cold air flows from the front (cool aisle), cools down the equipment, and leaves the room from the back (warm aisle).
+
+== Two Or Three Loops
+The airflow through the underfloor plenum, the racks, and back to the CRAC (a 1960s term for computer room air conditioning) defines the primary air circuit, i.e., the *first loop*.
+
+The *second loop* (the liquid supply inside the CRACs units) leads directly from the CRAC to external heat exchangers (typically placed on the building roof) that discharge the heat to the environment.
+
+A three-loop system commonly used in large-scale data center
+
+#figure(image("../figures/three-loop.jpg"))
+
+== Chillers and Cooling Towers
+A water-cooled chiller can be thought of as a water-cooled air conditioner.
+
+Cooling towers cool a water stream *by evaporating* a portion of it into the atmosphere. They do not work as well in very cold climates because they need additional mechanisms to prevent ice formation.
 
 == Tier of Data Centers
 #table(
@@ -431,6 +461,11 @@ IT equipment generates *a lot of heat:* the *cooling system* is usually a very e
 
 #pagebreak()
 
+= Networking
+
+
+#pagebreak()
+
 = Virtualization
 A *Virtual Machine (VM)* is a logical abstraction able to provide a virtualized execution environment. More specifically, a VM:
 - provides identical software behavior
@@ -445,6 +480,10 @@ Its tasks are:
 Two types of Virtual Machines:
 - *Process VMs*
 - *System VMs*
+
+The implementation of virtualization can be done in two ways:
+- *Hardware-level virtualization:* Virtualization layer is placed between hardware and OS.
+- *Application-level virtualization:* A virtualization layer is placed between the OS and some applications
 
 == Process Virtual Machines
 Process VMs is able to support an individual process, the virtualizing software is placed at the *ABI interface*, on top of the OS/hardware combination.
@@ -461,14 +500,41 @@ Virtualizing software placed between hardware and software (emulates the ISA int
 - *Host:* the underlying platform supporting the environment/system
 - *Guest:* the software that runs in the VM environment as the guest.
 
-== Virtual Machine Managers
+== Virtual Machine Managers (Hypervisors)
 An application that:
 - manages the virtual machines
 - mediates access to the hardware resources on the physical host system
 - intercepts and handles any privileged or protected instructions issued by the virtual machines
 
+There are two main types of hypervisors:
+- *Type 1 (Bare-Metal) Hypervisors:* *These run directly on the host's hardware*, acting as the primary operating system. They are generally more efficient and secure, making them the standard for enterprise data centers. Examples include VMware vSphere/ESXi, Microsoft Hyper-V, and the open-source KVM.
+- *Type 2 (Hosted) Hypervisors:* These run as an application on top of a conventional *host operating system*. They are easier to install and manage, making them suitable for desktop environments and development purposes. Examples include VMware Workstation, Oracle VirtualBox, and Parallels Desktop.
+
+#figure(table(
+  columns: 3,
+  stroke: 0.5pt,
+  align: left,
+  [*Feature*], [*Type 1 Hypervisor*], [*Type 2 Hypervisor*],
+  [Runs On], [Bare-metal hardware], [Host operating system],
+  [Performance], [High], [Moderate to low],
+  [Security], [Strong], [Weaker (depends on host OS)],
+  [Use Case], [Production, enterprise], [Testing, development, education],
+  [Setup Complexity], [Complex], [Simple],
+))
+
+== System-Level Virtualization Techniques
+A key aspect of hypervisor-based virtualization is how it handles privileged instructions from the guest OS.
+
+=== Full Virtualization
+*Full virtualization* uses a technique called binary translation to dynamically rewrite and translate these instructions, allowing an unmodified guest OS to run in *complete isolation*. However, this translation process can introduce performance overhead. To address this, modern processors from Intel (VT-x) and AMD (AMD-V) offer hardware-assisted virtualization. These CPU extensions provide a new execution mode that allows the hypervisor to more efficiently handle privileged instructions, significantly improving the performance of virtual machines.
+
+=== Paravirtualization
+*Paravirtualization* is a variation of hypervisor-based virtualization that aims to improve performance by modifying the guest operating system's kernel. In a paravirtualized environment, the guest OS is aware that it is running on a hypervisor and includes special drivers to communicate directly with it. This "cooperative" approach eliminates the need for the hypervisor to perform complex binary translation of privileged instructions.
+
+By using these specialized "hypercalls," the guest OS can interact more efficiently with the hypervisor for tasks like memory management and I/O operations. The main advantage of paravirtualization is reduced overhead and near-native performance for the guest. However, its primary drawback is the requirement to modify the guest OS, which can limit the choice of supported operating systems and create maintenance challenges. The Xen hypervisor is a well-known example that heavily utilizes paravirtualization.
+
 == Containers
-Containers are *pre-configured packages*, with everything you need to execute the code (code, libraries, variables and configurations) in the target machine.
+Containers are *pre-configured packages*, with everything you need to execute the code (code, libraries, variables and configurations) in the target machine. Shares host OS kernel; only the app and its dependencies are containerized.
 
 The main advantage of containers is that their behavior is *predictable, repeatable and immutable*:
 - When I create a "master" container and duplicate it on another server, *I know exactly how it will be executed*
@@ -481,3 +547,121 @@ Containers are:
 - *Portable:* you can create locally, deploy in the Cloud and run anywhere;
 - *Scalable:* it is possible to automatically increase and distribute replicas of the container;
 - *Stackable:* containers can be stacked vertically and on the fly.
+
+#pagebreak()
+
+= Cloud Computing
+Cloud computing is a coherent, large-scale, publicly accessible collection of computing, storage, and networking resources.
+
+Hardware resources (CPU, RAM, etc.) are partitioned and shared among multiple *virtual machines (VMs)*. The virtual machine monitor (VMM) governs the access to the physical resources among running VMs.
+
+== Types of Clouds
+=== Public Cloud
+A Public Cloud is a cloud infrastructure owned and operated by third-party cloud service providers (e.g., Amazon Web Services, Microsoft Azure, Google Cloud Platform). The infrastructure is shared among multiple organizations (tenants), and services are delivered over the Internet.
+
+Public clouds are cost-effective and scalable, requiring no upfront hardware investment. However, they raise concerns about data privacy, limited control, and compliance, especially in sensitive or regulated industries.
+
+Ideal for startups, software development, and non-sensitive workloads, where scalability and low costs are critical. It democratizes access to computing resources, allowing even small businesses to access enterprise-grade IT infrastructure.
+
+
+=== Private Cloud
+A Private Cloud is a cloud environment exclusively used by a single organization. It can be hosted on-premises or by a third party, but the infrastructure is not shared with others.
+
+Private clouds offer greater control, security, and customization. However, they require significant capital expenditure and internal IT expertise to manage effectively.
+
+Best suited for large enterprises, government agencies, or financial institutions that must comply with strict regulatory requirements and demand full control over their data and operations.
+
+=== Community Cloud
+A Community Cloud is shared by several organizations with similar interests or requirements (e.g., regulatory compliance, security, mission). It is jointly managed or hosted by one of the participants or a third-party provider.
+
+Community clouds promote collaboration and resource sharing while maintaining better privacy than public clouds. However, they can be complex to govern and sustain long-term due to shared responsibilities and costs.
+
+Useful in healthcare, research, education, or public sector collaborations, where multiple institutions must adhere to common policies or data standards.
+
+=== Hybrid Cloud
+A Hybrid Cloud combines two or more cloud types (typically public and private) that remain distinct but are integrated to allow data and application portability.
+
+Hybrid clouds offer flexibility—sensitive data can be kept in a private cloud, while less critical workloads are offloaded to a public cloud. Challenges include managing interoperability and maintaining consistent security policies.
+
+Highly beneficial for organizations undergoing digital transformation, enabling a balance between performance, security, and cost. Often used for cloud bursting (handling peak loads in the public cloud) or for disaster recovery strategies.
+
+#set table(stroke: 0.5pt + black)
+
+#table(
+  columns: (1.2fr, 1fr, 1fr, 1fr, 1fr),
+  align: (left, center, center, center, center),
+  fill: (x, y) => if y == 0 { gray.lighten(70%) } else { white },
+
+  // Header row
+  [*Characteristic*], [*Public Cloud*], [*Private Cloud*], [*Community Cloud*], [*Hybrid Cloud*],
+
+  // Infrastructure ownership
+  [*Infrastructure Ownership*],
+  [Third-party provider],
+  [Single organization or dedicated provider],
+  [Shared among community members],
+  [Mixed ownership model],
+
+  // Access control
+  [*Access Control*],
+  [Multi-tenant shared access],
+  [Single-tenant exclusive access],
+  [Limited multi-tenant within community],
+  [Varies by component],
+
+  // Cost structure
+  [*Cost Structure*],
+  [Pay-as-you-use, low upfront],
+  [High upfront, predictable ongoing],
+  [Shared costs among members],
+  [Mixed cost model],
+
+  // Scalability
+  [*Scalability*],
+  [Virtually unlimited],
+  [Limited by private infrastructure],
+  [Limited by community resources],
+  [High flexibility],
+
+  // Security control
+  [*Security Control*],
+  [Provider-managed, standardized],
+  [Full organizational control],
+  [Shared governance model],
+  [Varies by component],
+
+  // Compliance
+  [*Compliance*],
+  [Provider compliance frameworks],
+  [Full customization possible],
+  [Industry-specific compliance],
+  [Flexible compliance approach],
+
+  // Deployment complexity
+  [*Deployment Complexity*],
+  [Low - provider managed],
+  [High - requires expertise],
+  [Medium - shared responsibility],
+  [High - integration complexity],
+
+  // Typical use cases
+  [*Typical Use Cases*],
+  [Startups, web applications, development/testing],
+  [Large enterprises, government, regulated industries],
+  [Healthcare consortiums, education, research],
+  [Digital transformation, variable workloads],
+
+  // Primary advantages
+  [*Primary Advantages*],
+  [Cost-effective, rapid deployment, global reach],
+  [Maximum control, security, customization],
+  [Shared costs, industry compliance, collaboration],
+  [Flexibility, optimization, gradual migration],
+
+  // Primary challenges
+  [*Primary Challenges*],
+  [Limited control, compliance concerns, vendor lock-in],
+  [High costs, complexity, maintenance burden],
+  [Governance complexity, limited resources],
+  [Integration complexity, management overhead],
+)
