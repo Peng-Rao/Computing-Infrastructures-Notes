@@ -377,8 +377,59 @@ RAID 4 is similar to RAID 0, but it adds a *dedicated parity disk* to store erro
 - *Random write:* $R / 2$, Writes serialize due to the parity drive, Each write requires 1 read and 1 write of the parity drive, thus $R / 2$
 
 == Reliability Calculation
+Let's assume a constant Failure Rate, an exponentially distributed time to failure, and the case of independent failures.
 
+RAID 0 has no redundancy: $"MTTF"_"RAID 0" = "MTTF"_"disk" = "MTTD"_"singleDisk" / "Disks"$
 
+RAID levels (>0) uses redundancy to improve reliability. When a disk fails, it should be replaced and the information reconstructed on the new disk using the redundant information. MTTR is the time needed for this action.
+
+- *RAID0*: $"MTTF"_"RAID0" = "MTTF"_"singleDisk"slash N$
+- *RAID1*: $"MTTF"_"RAID1" = ("MTTF"_"singleDisk")^2 slash (N times "MTTR")$
+- *RAID1+0*: $"MTTF"_"RAID1" = ("MTTF"_"singleDisk")^2 slash (N times "MTTR")$
+- *RAID0+1*: $"MTTF"_"RAID1" = ("MTTF"_"singleDisk")^2 slash (N times G times "MTTR")$
+- *RAID4*: $"MTTF"_"RAID4" = ("MTTF"_"singleDisk")^2 slash (N times (N - 1) times "MTTR")$
+- *RAID5*: $"MTTF"_"RAID5" = ("MTTF"_"singleDisk")^2 slash (N times (N - 1) times "MTTR")$
+- *RAID6*: $"MTTF"_"RAID6" = 2 times ("MTTF"_"singleDisk")^3 slash (N times (N - 1) times (N - 2) times "MTTR"^2)$
+
+#pagebreak()
+
+= Dependability
+
+== Reliability
+The reliability is the ability of a system or component to perform its required functions under stated conditions for a specified period of time.
+
+#definition("Reliability")[
+  $R(t)$ is the probability that the system will operate correctly in a specified operating environment until time $t$.
+
+  $R(t)$ is a non-increasing function varying from 1 to 0 over $[0, infinity]$.
+
+  $
+                            R(0) & = 1 \
+    lim_(t arrow +infinity) R(t) & = 0 \
+      f(x) = - (d R (t)) / (d t)
+  $
+]
+
+== Availability
+Availability is the degree to which a system or component is operational and accessible when required for use.
+
+Availability = Uptime / (Uptime + Downtime)
+
+$
+  A = "MTTF" / ("MTTF" + "MTTR")
+$
+
+== Reliability Block Diagrams
+An inductive model where a system is divided into blocks that represent distinct elements such as components or subsystems. Every element in the RBD has its own reliability (previously calculated or modelled).
+
+In general, if system S is composed by components with a reliability having an exponential distribution (very common case)
+$
+  R_s(t) = e^(-lambda_s t)
+$
+where
+$
+  lambda_s = sum_(i=1)^n lambda_i
+$
 
 #pagebreak()
 
@@ -431,7 +482,7 @@ In-row cooling works like in-rack cooling except the cooling coils aren't in the
 
 === Liquid cooling
 We can directly cool server components using cold plates, i.e., local liquid-cooled heat sinks:
-- Impractical to cool all compute components with cold plates.
+- *Impractical* to cool all compute components with cold plates.
 - Components with the highest power dissipation are targeted for liquid cooling while other components are air-cooled.
 
 The liquid circulating through the heat sinks transports the heat to a liquid-to-air or liquid-to-liquid heat exchanger that can be placed close to the tray or rack, or be part of the data center building (such as a cooling tower).
@@ -481,7 +532,22 @@ The liquid circulating through the heat sinks transports the heat to a liquid-to
 #pagebreak()
 
 = Networking
+== Traffic
+*East-West traffic* refers to data traffic that flows between servers within a data center, typically involving communication between different applications or services hosted on those servers. This type of traffic is often characterized by *high volumes and low latency* requirements, as it supports internal operations like database queries, microservices interactions, and distributed computing tasks.
 
+*East-West traffic usually larger than North-South traffic.
+*
+
+== Three-Tier Network
+*Three-tier* is a simple DCN topology, servers are connected to the DCN through *access switches*, each access-level switch is connected to at least two *aggregation-level* switches. Aggregation-level switches are connected to *core-level* switches (gateways).
+
+#figure(image("../figures/three-tier-network.jpg"))
+
+== ToR (TOP of Rack)
+All servers in a rack are connected to a ToR access switch within the same rack. Aggregation switches are in dedicated racks or in shared racks with other ToR switches and servers. The number of cables is limited a simpler cabling. The number of ports per switch is also limited (lower costs).
+
+== EoR (End of Row)
+Aggregation Switches are positioned one per corridor, at the end of a line of rack. servers in a racks are connected directly to the aggregation switch in another rack, Aggregation switches must have a larger number of ports more complex cabling, longer cables are required (higher costs). Patch panel to connect the servers to the aggregation switch.
 
 #pagebreak()
 
@@ -684,3 +750,106 @@ Highly beneficial for organizations undergoing digital transformation, enabling 
   [Governance complexity, limited resources],
   [Integration complexity, management overhead],
 )
+
+#pagebreak()
+
+= Performance
+The total effectiveness of a computer system in terms
+- throughput
+- response time
+- availability
+
+== Way to evaluate system quality
+Use of intuition and trend extrapolation. But Unfortunately, those who possess these qualities in sufficient quantity are rare.
+
+Experimental evaluation of alternatives. Experimentation is always valuable, often required, and sometimes the approach of choice.
+
+== Operational Laws
+Operational laws are based on *observable variables* --- values which we could derive from watching a system over a finite period of time. We assume that the system receives requests from its environment. Each request generates a *job* or *customer* within the system. When the job has been processed the system responds to the environment with the completion of the corresponding request.
+
+If we observed such an abstract system we might measure the following quantities:
+- T, the length of *time* we observe the system
+- A, the number of request *arrivals* we observe
+- C, the number of request *completions* we observe
+- B, the total amount of time during which the system is *busy* ($B lt.eq T$)
+- N, the average *number of jobs* in the system
+
+From these observed values we can derive the following four important quantities:
+- $lambda = A / T$, the *arrival* rate
+- $X = C / T$, the *throughput* or completion rate
+- $U=B/T$, the *utilization*
+- $S = B / C$, the *mean service time* per completed job
+
+We will assume that the system is job flow balanced. The number of arrivals is equal to the number of completions during an observation period, i.e. A = C.
+
+== Demand
+Demand (service demand time) is a measure of the total time a resource takes to process a service request.
+$
+  D_i = V_i times S_i
+$
+where
+- $D_i$ is the demand at resource $i$
+- $V_i$ is the visit count at resource $i$
+- $S_i$ is the service time at resource $i$
+
+== Utilization Law
+Let us recall the following definitions for a resource $k$:
+- Throughput: $X_k = C_k / T_k$
+- Service time: $S_k = B_k / C_k$
+- Utilization: $U_k = B_k / T$
+we can derive (utilization law):
+$
+  U_k = X_k S_k = D_k X
+$
+
+In an observation interval we can count not only completions external to the system, but also the number of completions at each resource within the system. Let $C_k$ is the number of completions at the k-th resource to the number of system completions.
+
+We define the visit count
+$
+  V_k = C_k / C
+$
+
+== Forced Flow Law
+$
+  X_k = X times V_k
+$
+
+== Response Time Law
+$
+  R = N / X - Z
+$
+where
+- $R$ is the response time of a system
+- $N$ is the number of users
+- $X$ is the throughput
+- $Z$ is the think time (the time a user spends thinking about the next request).
+
+== Little's Law
+If the think time is zero, $Z=0$ and $R=N/X$, then the response time law simply becomes Little's Law
+$
+  N = X times R
+$
+
+== Performance bounds
+=== Open Model
+The resource within a system which has the greatest service demand is known as the bottleneck resource or bottleneck device, and its service demand is $"max"_k {D_k}$, denoted as $D_max$.
+
+Bound for the response time:
+$
+  R gt.eq R_min = sum_k D_k
+$
+
+Bound for the throughput:
+$
+  X lt.eq 1 / D_max
+$
+
+=== Closed Model
+Bound due to Think Time:
+$
+  X lt.eq N / (D + Z)
+$
+Bound due to Bottleneck Device:
+$
+  X lt.eq 1 / D_max
+$
