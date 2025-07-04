@@ -830,7 +830,6 @@ $
   N = X times R
 $
 
-== Performance bounds
 === Open Model
 The resource within a system which has the greatest service demand is known as the bottleneck resource or bottleneck device, and its service demand is $"max"_k {D_k}$, denoted as $D_max$.
 
@@ -845,6 +844,10 @@ $
 $
 
 === Closed Model
+$
+  R gt.eq N times D_max - Z
+$
+
 Bound due to Think Time:
 $
   X lt.eq N / (D + Z)
